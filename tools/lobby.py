@@ -136,6 +136,16 @@ def ack_prefix(key):
 
 # --- inner RPC ("tdr compact") ---------------------------------------------
 
+MAP_BEGIN = 0x07
+MAP_END = 0x08
+# 0x09..0x1f appear as single bytes carrying a small integer (seen as the
+# values of startup_type, device_type, Sex, Memory, Density). The exact base is
+# not pinned down, so these are decoded as ("small", raw) and never emitted —
+# numbers we send use the 0x02 varint form, which is proven by
+# test_encoder_reproduces_capture.
+SMALL_INT_LO, SMALL_INT_HI = 0x09, 0x1F
+
+
 def _uvarint(b, i):
     v = s = 0
     while True:
@@ -170,9 +180,13 @@ def tdr_parse(b, i=0, end=None):
         elif t == 0x04:
             out.append(b[i])
             i += 1
-        elif t == 0x07:
+        elif t == MAP_BEGIN:
             m, i = _tdr_map(b, i, end)
-            out.append(("map", m))
+            out.append(dict(m))
+        elif t == MAP_END:
+            break
+        elif SMALL_INT_LO <= t <= SMALL_INT_HI:
+            out.append(("small", t))
         else:
             out.append(("raw", b[i - 1:end]))
             break
@@ -180,20 +194,20 @@ def tdr_parse(b, i=0, end=None):
 
 
 def _tdr_map(b, i, end):
+    """Parse `0x07 (key value)* 0x08`."""
     pairs = []
-    while i < end and b[i] == 0x03:
+    while i < end and b[i] != MAP_END:
+        if b[i] != 0x03:                    # keys are always strings
+            break
         n = b[i + 1]
         key = b[i + 2:i + 2 + n]
         i += 2 + n
         if i >= end:
             break
-        vals = tdr_parse(b, i, end)        # value is the next single element
+        vals = tdr_parse(b, i, end)         # value is the next single element
         pairs.append((key, vals[0] if vals else None))
-        # advance i past exactly one element
         i = _skip_one(b, i, end)
-        if key in (b"relogin",) and i >= end:
-            break
-    return pairs, i
+    return pairs, i + 1 if i < end else i
 
 
 def _skip_one(b, i, end):
@@ -206,6 +220,11 @@ def _skip_one(b, i, end):
         return i
     if t == 0x04:
         return i + 1
+    if SMALL_INT_LO <= t <= SMALL_INT_HI:
+        return i
+    if t == MAP_BEGIN:
+        _, i = _tdr_map(b, i, end)
+        return i
     return end
 
 
@@ -215,10 +234,52 @@ def tdr_string(t, s):
 
 def tdr_reply(method, code, detail):
     """Build a minimal RPC reply body: 0x78, result name, 0x02 code, detail."""
+    return encode_pkg(method, code, detail)
+
+
+def tdr_encode_value(v):
+    """Encode one value in the tdr-compact form the client's dispatcher reads.
+
+    str/bytes -> 0x03 len data   (1-byte length; no sample of a >255-byte
+    string exists in the captures, so long strings are unsupported)
+    int        -> 0x02 LEB128
+    bool       -> 0x04 u8
+    dict       -> 0x07 then string-keyed entries
+    """
+    if isinstance(v, (str, bytes)):
+        b = v.encode() if isinstance(v, str) else v
+        if len(b) > 255:
+            raise ValueError("long-string encoding unknown (no sample)")
+        return bytes([0x03, len(b)]) + b
+    if isinstance(v, bool):
+        return bytes([0x04, 1 if v else 0])
+    if isinstance(v, int):
+        return b"\x02" + _enc_varint(v)
+    if isinstance(v, tuple) and v and v[0] == "small":
+        # a value we decoded as a single-byte small int: re-emit it verbatim so
+        # it means to the client exactly what the client sent
+        return bytes([v[1]])
+    if isinstance(v, dict):
+        out = bytearray([MAP_BEGIN])
+        for k, val in v.items():
+            out += tdr_encode_value(k)
+            out += tdr_encode_value(val)
+        out.append(MAP_END)
+        return bytes(out)
+    raise TypeError(f"cannot encode {type(v).__name__}")
+
+
+def encode_pkg(method, *args):
+    """Build a DATA payload: 0x78, the method name, then its arguments.
+
+    Mirrors NetUtil.SendPkg / NetUtil.DispatchPacket(msg, ...) in
+    client/client_entry.lua: the first value is the message name and the rest
+    are passed straight to the registered s2c handler.
+    """
     out = bytearray(b"\x78")
-    out += tdr_string(0x03, method)
-    out += b"\x02" + _enc_varint(code)
-    out += tdr_string(0x03, detail)
+    out += tdr_encode_value(method)
+    for a in args:
+        out += tdr_encode_value(a)
     return bytes(out)
 
 

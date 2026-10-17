@@ -42,7 +42,7 @@ def test_decrypt_and_rpc():
     login = next(f for f in c2s if f.cmd == L.DATA)
     p = login.plain(key)
     check(L.rpc_method(p) == b"login", "c2s DATA method is login")
-    m = dict(L.tdr_parse(p, p.index(0x78) + 1)[2][1])   # the property map
+    m = L.tdr_parse(p, p.index(0x78) + 1)[2]   # the property map
     check(m[b"DeviceId"] == b"61a8792717ec0528", "DeviceId parsed")
     check(m[b"ClientVersion"] == 1, "ClientVersion parsed")
     check(m[b"NetWork"] == b"Wifi", "NetWork parsed")
@@ -79,6 +79,58 @@ def test_handshake_bodies_match_capture():
     check(len(L.bingo_body(b"1~J7IsgwyhSyn3iN24A")) == 33, "bingo length 33")
 
 
+def test_encoder_reproduces_capture():
+    """encode_pkg must rebuild the real server's login_failed payload exactly."""
+    s2c = list(L.frames(load("lobby_s2c.bin")))
+    key = L.ack_key(next(f for f in s2c if f.cmd == L.ACK))
+    want = next(f for f in s2c if f.cmd == L.DATA).plain(key)
+
+    vals = L.tdr_parse(want, want.index(0x78) + 1)
+    conn_idx, reason = vals[1], vals[2]
+    check(vals[0] == b"login_failed", "decoded method")
+    got = L.encode_pkg("login_failed", conn_idx, reason)
+    check(got == want, f"encode_pkg round-trip\n got {got.hex()}\nwant {want.hex()}")
+
+    # the packet we actually want to send takes no arguments
+    pcr = L.encode_pkg("please_create_role")
+    check(pcr == b"\x78\x03\x12please_create_role", f"please_create_role: {pcr.hex()}")
+    check(L.rpc_method(pcr) == b"please_create_role", "method reads back")
+
+
+def test_login_args_match_lua_signature():
+    """logic_login.lua sends login(ver, device_info, startup_type, ext_info, ...).
+    The decoder must see that structure, which only works if maps are
+    terminated by 0x08 and consumed exactly."""
+    s2c = list(L.frames(load("lobby_s2c.bin")))
+    c2s = list(L.frames(load("lobby_c2s.bin")))
+    key = L.ack_key(next(f for f in s2c if f.cmd == L.ACK))
+    p = next(f for f in c2s if f.cmd == L.DATA).plain(key)
+    vals = L.tdr_parse(p, p.index(0x78) + 1)
+    check(vals[0] == b"login", "arg0 method")
+    check(vals[1] == b"0.3.2.3212", "arg1 version")
+    check(isinstance(vals[2], dict) and len(vals[2]) == 15,
+          f"arg2 device_info map, got {type(vals[2])}")
+    check(vals[2][b"DeviceId"] == b"61a8792717ec0528", "device map content")
+    check(isinstance(vals[4], dict) and b"relogin" in vals[4],
+          f"arg4 ext_info{{relogin}}, got {vals[4]!r}")
+
+
+def test_map_roundtrip():
+    for d in ({}, {"a": 1}, {"name": "SEKHON", "level": 1, "depot": {"items": {}}}):
+        enc = L.tdr_encode_value(d)
+        check(enc[0] == L.MAP_BEGIN and enc[-1] == L.MAP_END,
+              f"map framed by 07..08: {enc.hex()}")
+        def as_bytes(x):
+            if isinstance(x, str):
+                return x.encode()
+            if isinstance(x, dict):
+                return {as_bytes(k): as_bytes(v) for k, v in x.items()}
+            return x
+
+        back = L.tdr_parse(enc)[0]
+        check(back == as_bytes(d), f"map round-trip {d} -> {back}")
+
+
 def test_build_reply():
     key = b"YkYPJqDyimCbgCQz"
     body = L.tdr_reply("login_failed", 0x7de080 & 0x7f, "version_error")  # shape only
@@ -95,5 +147,8 @@ if __name__ == "__main__":
         test_frame_roundtrip()
         test_decrypt_and_rpc()
         test_handshake_bodies_match_capture()
+        test_encoder_reproduces_capture()
+        test_login_args_match_lua_signature()
+        test_map_roundtrip()
         test_build_reply()
     print(f"ok: {checks} checks passed")
