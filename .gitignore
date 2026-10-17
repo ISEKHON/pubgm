@@ -1,0 +1,9 @@
+extracted/
+*.xapk
+server/build/
+__pycache__/
+recon/strings.txt
+recon/strings_utf32.txt
+recon/symbols.txt
+recon/disasm/
+recon/tgcp/
