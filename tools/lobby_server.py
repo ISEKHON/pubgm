@@ -1,14 +1,23 @@
-"""Local lobby server + bring-up instrument for the :17500 tconnd transport.
+"""Lobby server for PUBG Mobile 0.3.2 -- the :17500 tconnd transport.
 
-    python -I tools/lobby_server.py [--port 17500] [--login-reply FILE]
+    python -I tools/lobby_server.py [--port 17500] [--db pubgm.db]
+                                    [--starting-gold N]
 
 Completes the tconnd handshake (SYN->ACK, AUTHREQ->AUTHRSP+BINGO) with a session
-key we choose, then logs every DATA RPC decoded and answers `login`. The login
-reply schema is unknown (it lives in encrypted Lua), so this is an oracle: send
-a guess, watch the client's next request or error, refine. --login-reply loads a
-raw reply payload from a file to iterate without editing code.
+key we choose, then serves the lobby RPCs. Accounts, characters and inventory
+persist in SQLite (store.py), so players keep their character across restarts
+and several people get distinct identities. Manage them with tools/admin.py.
 
-Nothing here touches the official servers; it only answers our own client.
+Taking the client from login to the full lobby UI needs two non-obvious things;
+both are documented in docs/14-lobby-reached.md and enforced in store.py:
+  * there is no `login_success` -- success is signalled by simply sending the
+    next packet (`please_create_role`, or `sync_base_info` for a returning
+    player);
+  * parts of roleData must be OMITTED rather than sent empty, because they are
+    nil-guarded and their non-nil paths dereference sub-fields.
+
+Every DATA RPC is logged decoded, so this doubles as the bring-up instrument.
+Nothing here touches the official services; it only answers our own client.
 """
 import argparse
 import asyncio
@@ -20,6 +29,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lobby as L  # noqa: E402
+from store import Store  # noqa: E402
 
 
 # request -> (reply name, reply args). Handler signatures, from the Lua:
@@ -44,13 +54,12 @@ def log(peer, msg):
 
 
 class Session:
-    def __init__(self, cfg, reader, writer):
-        self.cfg, self.reader, self.writer = cfg, reader, writer
+    def __init__(self, cfg, reader, writer, db):
+        self.cfg, self.reader, self.writer, self.db = cfg, reader, writer, db
         self.peer = "%s:%d" % writer.get_extra_info("peername")[:2]
         self.key = rnd(16).encode()
         self.openid = b""
-        self.role_name = b""
-        self.avatar = {"gamegender": 1, "headid": 0, "hairid": 0}
+        self.uid = None
         self.token = b""
         self.sseq = 0
 
@@ -103,25 +112,88 @@ class Session:
             key = args[0] if args else 0
             return [L.encode_pkg("heart_beat", key, int(time.time()))]
         if method == b"login":
-            # a fresh Guest account has no character yet
-            return [L.encode_pkg("please_create_role")]
+            # The client's openid is self-asserted and unverifiable, so on a
+            # public server admission control is the only gate. See
+            # docs/16-hosting.md.
+            ok, why = self.db.may_login(self.openid, self.cfg.registration)
+            if not ok:
+                log(self.peer, f"   REJECTED ({why}) openid="
+                               f"{self.openid.decode('ascii', 'replace')}")
+                if why == "not_invited":
+                    log(self.peer, "   to admit: python -I tools/admin.py invite "
+                                   f"{self.openid.decode('ascii', 'replace')}")
+                return [L.encode_pkg("login_failed", 0, why)]
+            self.db.touch_account(self.openid)
+            ch = self.db.get_character_by_openid(self.openid)
+            if ch is None:
+                return [L.encode_pkg("please_create_role")]
+            log(self.peer, f"   returning player {ch['name']} (uid {ch['uid']})")
+            self.uid = ch["uid"]
+            return [L.encode_pkg("sync_base_info", self.db.role_data(ch))]
         if method == b"create_role_request":
             # bp_createrole.lua: SendPriorityPkg(true, "create_role_respond",
             #   "create_role_request", Name, Sex, HeadId, HairID, DeviceOSInfo)
             name = args[0] if args else b"Player"
-            self.role_name = name
-            # args: Name, Sex, HeadId, HairID, DeviceOSInfo -- echo the look
-            # back so the character the player built is the one the lobby shows
-            # pass the decoded values straight back: each re-encodes in the
-            # same form the client used, so the ids mean what the client meant
-            self.avatar = {
-                "gamegender": args[1] if len(args) > 1 else 1,
-                "headid": args[2] if len(args) > 2 else 0,
-                "hairid": args[3] if len(args) > 3 else 0,
-            }
-            log(self.peer, f"   avatar={self.avatar}")
+            if self.db.get_character_by_name(name):
+                # the client shows this string in the create-role UI
+                return [L.encode_pkg("create_role_respond", "name_exist")]
+            ch = self.db.create_character(
+                self.openid, name,
+                gamegender=args[1] if len(args) > 1 else 1,
+                headid=args[2] if len(args) > 2 else 0,
+                hairid=args[3] if len(args) > 3 else 0,
+                gold=self.cfg.starting_gold)
+            self.uid = ch["uid"]
+            log(self.peer, f"   created {ch['name']} uid={ch['uid']}")
             return [L.encode_pkg("create_role_respond", "ok"),
-                    L.encode_pkg("sync_base_info", self.role_data(name))]
+                    L.encode_pkg("sync_base_info", self.db.role_data(ch))]
+        # Team / room state. The client asks for all of this before a match is
+        # valid; signatures from logic_teamup.lua and logic_lobby.lua.
+        if method == b"query_myid_request":
+            # on_query_myid_respond(myuserid) -- it then asks for team info
+            return [L.encode_pkg("query_myid_respond", str(self.uid or 0))]
+        if method == b"room_info_request":
+            # on_sync_room_info(room, members): room == nil takes the clean
+            # "not in a room" path, so send the packet with no arguments.
+            return [L.encode_pkg("sync_room_info")]
+        if method == b"team_info_request":
+            # on_team_info_sync(teamid, teaminfo). teamid 0 means solo, and the
+            # client rebuilds the structure itself via CreateTeamInfoSingle --
+            # but CompareMemBer() then walks teaminfo.members, so `members`
+            # must be a table rather than absent (same nil-trap as docs/14).
+            return [L.encode_pkg("team_info_sync", 0,
+                                 {"fill": 1, "members": {}, "team_type": 0})]
+        if method == b"get_mode_shield_req":
+            # on_mode_shield_rsp(mode_shields): {mode_id: {is_shield,
+            # open_begin, open_end}}. Empty = nothing is time-locked.
+            return [L.encode_pkg("get_mode_shield_rsp", {})]
+        if method == b"team_change_type_request":
+            return [L.encode_pkg("team_change_type_respond", "ok")]
+        if method == b"query_match_zone_list":
+            # sync_match_zone_list_rsp sorts/iterates this and SaveZoneListInfo
+            # reads zone_id / tpingsvr_ip / tpingsvr_port (port is a STRING --
+            # see the commented-out test data in logic_teamup.lua). With an
+            # empty list the client has no zone and falls back to pinging a
+            # hardcoded address, so advertise our own.
+            return [L.encode_pkg("sync_match_zone_list", {
+                "1": {"zone_id": 1,
+                      "tpingsvr_ip": self.cfg.match_ip,
+                      "tpingsvr_port": str(self.cfg.ping_port)},
+            })]
+        if method == b"query_gm_request":
+            # the client's built-in GM channel; gated on the account flag
+            row = self.db.db.execute("SELECT is_admin FROM account WHERE openid=?",
+                                     (self.openid.decode("ascii", "replace"),)).fetchone()
+            is_gm = bool(row and row["is_admin"])
+            log(self.peer, f"   GM channel -> {is_gm}")
+            return [L.encode_pkg("query_gm_respond", 1 if is_gm else 0)]
+        if method == b"on_match_req":
+            return self.start_match(args)
+        if method == b"on_match_cancel_req":
+            return [L.encode_pkg("on_match_cancel_res", "ok")]
+        if method == b"giveup_enter_game":
+            log(self.peer, "   player declined the battle invite")
+            return []
         # Lobby content requests. Signatures from the s2c handlers in the
         # game's Lua; empty collections are enough to let the UI finish init.
         if method in CONTENT_REPLIES:
@@ -130,38 +202,72 @@ class Session:
         log(self.peer, f"   (no handler for {method!r})")
         return []
 
-    def role_data(self, name):
-        """Minimal roleData for LobbySystem.on_sync_base_info.
+    def start_match(self, args):
+        """Hand the player off to the UE4 game server.
 
-        Field names are taken straight from the roleDataTb table in
-        logic_lobby.lua. wxsubscribe/qqsubscribe must be present as tables with
-        a setflag, or the client logs "服务端没有下发...字段" and may fault.
+        The chain, all from the game's own Lua (docs/17-match-handoff.md):
+
+            c2s on_match_req(roomMode, autoFill)
+            s2c on_match_res(msg, waitTime, reason, surplustime)
+            s2c on_match_success(msg, team_info)        -> shows loading
+            s2c re_enter_game(ip, port, key, packet_key,
+                              game_id, res, team_info)  -> NetUtil.EnterBattle
+
+        `res` must be "ok" or the client shows an error and returns to the
+        lobby. `key`, `packet_key` and `game_id` are opaque to the client: it
+        carries them to the game server untouched. Since we run that server
+        too, they are ours to define -- the same property that made the UE4
+        handshake cookie our own choice (docs/04).
         """
-        # avatar MUST be a table: data_mgr.lua reads avatar.gamegender /
-        # .headid / .hairid directly, and indexing a number aborts the rest of
-        # on_sync_base_info -- which leaves the lobby scene loaded but its UI
-        # never built (a blank screen with the background visible).
-        return {
-            "name": name, "level": 1, "openid": self.openid,
-            "uid": 10001, "exp": 0, "gold": 0,
-            "avatar": self.avatar,
-            "depot": {"items": {}},
-            "rolewear": {}, "parachute": "", "signature": "",
-            "pic_url": "", "rela_sex": 0,
-            "segment_info": {}, "login_reward": {},
-            "last_login_reward_remind": 0,
-            # task / activeness / week_signup / share_award are deliberately
-            # OMITTED. Each is nil-guarded in data_mgr.lua with a harmless
-            # `sandbox.LogError(...)` else-branch, so leaving them out skips
-            # that init entirely. Supplying them instead runs code that
-            # dereferences sub-fields (pairs(task.list), #week_signup.list) and
-            # calls UI updaters (ShareAwardMgr -> RoleInfoUI/LevelUpUI) during
-            # early init -- any of which aborts InitRoleData, and with it
-            # LocalEnterLobby(), leaving the lobby scene up with no UI.
-            "cur_avatar_box_id": 0, "qq_vip": 0, "xy_red_point": 0,
-            "anchor": 0, "svr_time": int(time.time()),
-            "wxsubscribe": {"setflag": 0}, "qqsubscribe": {"setflag": 0},
-        }
+        mode = args[0] if args else None
+        # Argument types are not guessable from the Lua (it only concatenates
+        # them); they come from disassembling the native binding at 0x00b1ccd8:
+        #   ip  checklstring | port checknumber | key  checknumber
+        #   name checklstring | packet_key checklstring | game_id checkinteger
+        # `key` as a hex string makes luaL_checknumber raise, DispatchPacket's
+        # xpcall swallows it, and EnterBattle silently never connects.
+        game_id = secrets.randbits(31)
+        key = secrets.randbits(31)
+        packet_key = secrets.token_hex(8)
+        ip, port = self.cfg.match_ip, self.cfg.match_port
+        self.db.record_match(self.uid, game_id, key, packet_key)
+        log(self.peer, f"   match: mode={mode!r} -> {ip}:{port} "
+                       f"game_id={game_id} key={key}")
+        # team_info is only used for voice chat, and in both handlers the voice
+        # call happens *after* the part we need, so an empty table cannot block
+        # the handoff even if it is the wrong shape.
+        team_info = {}
+        # `enter_game` (RoomSystem.on_enter_game, "正式进入游戏") is the packet
+        # for *entering* a match: 5 args, no res/team_info, and it calls
+        # EnterBattle straight away with no dialog. `re_enter_game` is the
+        # reconnect path -- it prompts, and did not connect.
+        #
+        # A real server allocates a DS between "match found" and "enter game",
+        # so enter_game arrives seconds later. Sent back-to-back it can land
+        # while the client is still switching out of the lobby, so delay it.
+        self.send_later(self.cfg.match_delay,
+                        L.encode_pkg("enter_game", ip, port, key,
+                                     packet_key, game_id))
+        return [
+            L.encode_pkg("on_match_res", "ok", 0),
+            L.encode_pkg("on_match_success", "ok", team_info),
+        ]
+
+    def send_later(self, delay, payload):
+        """Send a DATA packet after `delay` seconds, if still connected."""
+        async def go():
+            await asyncio.sleep(delay)
+            if self.writer.is_closing():
+                return
+            log(self.peer, f"   (delayed {delay}s) -> {L.rpc_method(payload)!r}")
+            self.send(L.data_frame(1, 0, self.key, payload))
+            await self.writer.drain()
+        asyncio.ensure_future(go())
+
+
+# roleData now lives in store.py:Store.role_data, built from the database.
+# The shape rules that make the lobby open at all are documented there and in
+# docs/14-lobby-reached.md -- read them before changing the payload.
 
     async def run(self):
         log(self.peer, "connected")
@@ -231,8 +337,12 @@ class Session:
 
 
 async def serve(cfg, ready=None):
+    db = Store(cfg.db)
+    print(f"store: {os.path.abspath(cfg.db)} "
+          f"({len(db.list_characters())} characters)", flush=True)
+
     async def handler(r, w):
-        await Session(cfg, r, w).run()
+        await Session(cfg, r, w, db).run()
     srv = await asyncio.start_server(handler, cfg.bind, cfg.port)
     port = srv.sockets[0].getsockname()[1]
     print(f"lobby server on {cfg.bind}:{port}", flush=True)
@@ -246,6 +356,22 @@ def parse_args(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--bind", default="0.0.0.0")
     ap.add_argument("--port", type=int, default=17500)
+    ap.add_argument("--db", default=os.environ.get("PUBGM_DB", "pubgm.db"),
+                    help="SQLite file holding accounts and characters")
+    ap.add_argument("--starting-gold", type=int, default=0,
+                    help="currency granted to a newly created character")
+    ap.add_argument("--registration", default="invite",
+                    choices=("open", "invite", "closed"),
+                    help="who may create an account (default: invite). Use"
+                         " 'open' only on a trusted LAN.")
+    ap.add_argument("--match-ip", default="127.0.0.1",
+                    help="address of the UE4 game server handed to clients")
+    ap.add_argument("--match-port", type=int, default=7777,
+                    help="port of the UE4 game server (server/)")
+    ap.add_argument("--ping-port", type=int, default=17000,
+                    help="UDP ping server port advertised in the zone list")
+    ap.add_argument("--match-delay", type=float, default=3.0,
+                    help="seconds between on_match_success and enter_game")
     ap.add_argument("--login-reply", help="file with a raw login reply payload")
     return ap.parse_args(argv)
 

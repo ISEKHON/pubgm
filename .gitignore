@@ -1,10 +1,45 @@
-extracted/apk
-extracted/*.apk
+# ---------------------------------------------------------------------------
+# Game content -- NEVER commit any of this. It is the copyrighted property of
+# its owners. Everyone runs these tools against their own legally obtained copy.
+# ---------------------------------------------------------------------------
+*.apk
 *.xapk
-server/build/
-__pycache__/
+*.obb
+*.pak
+*.uasset
+*.uexp
+*.ubulk
+extracted/
+game/
+
+# Analysis outputs derived from game files (large, and game-derived)
 recon/strings.txt
 recon/strings_utf32.txt
 recon/symbols.txt
+recon/gcloud-symbols.txt
+recon/pak-filelist.txt
 recon/disasm/
 recon/tgcp/
+recon/captures/
+*.pcap
+*.bin
+
+# Server runtime state
+*.db
+*.sqlite
+*.sqlite3
+config.local.toml
+logs/
+
+# Build artifacts
+server/build/
+__pycache__/
+*.pyc
+*.obj
+*.exe
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

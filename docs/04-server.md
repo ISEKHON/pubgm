@@ -108,6 +108,13 @@ fails to decode is logged loudly rather than dropped.
   cleared (`docs/09-tgcp-protocol.md`) and the lobby transport is solved
   (`docs/11-lobby-transport.md`); the client now reaches our lobby server and
   sends its `login` RPC. The remaining unknown is the login reply schema.
+> **Update:** the lobby now hands clients to this server. `docs/17-match-handoff.md`
+> confirms the link is **not** packet-encrypted (no `EncryptionComponent` in the
+> binary), so the stock StatelessConnect design below stands. Point the lobby at
+> this server with `run_server.py --match-ip <IP> --match-port 7777`, tap Start
+> in-game, accept the "re-enter battle?" dialog, and read the first datagram —
+> `src/main.c` is already the instrument for exactly that.
+
 - **Phase 5** — control channel. Note the numbering is **not stock**:
   `Join = 9`, not 7 (`recon/control-messages.md`), and the version word must
   match (first value to try: `0xF6035FB3`, see `recon/network-version.md`).
