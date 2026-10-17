@@ -111,6 +111,10 @@ success schema is not known.** `login`/`login_failed` do not appear in
 `libUE4.so` at all — the lobby logic is Lua inside the encrypted paks — so it
 cannot be read statically, and no successful login can be captured.
 
+> **Superseded by [13-lobby-login.md](13-lobby-login.md)** for everything past
+> the transport: the client now completes login, creates a character and enters
+> the lobby scene against `tools/lobby_server.py`.
+
 ## Where it stands
 
 Last run, with `tools/lobby_server.py` answering:
