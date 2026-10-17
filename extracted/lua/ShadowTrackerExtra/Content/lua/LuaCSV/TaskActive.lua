@@ -1,0 +1,8 @@
+BP_ARRAY_TaskActive=
+{
+	[1]={ID=1, Cond=30, DropID=131001, IconCheck="/Game/Arts/UI/TableIcons/Task_Icon/Box/Task_icon_box_1.Task_icon_box_1", IconGet="/Game/Arts/UI/TableIcons/Task_Icon/Box/Task_icon_box_1.Task_icon_box_1", IconGot="/Game/Arts/UI/TableIcons/Task_Icon/Box/Task_icon_box_1_1.Task_icon_box_1_1", BoxTitleName="108024"}, 
+	[2]={ID=2, Cond=60, DropID=131002, IconCheck="/Game/Arts/UI/TableIcons/Task_Icon/Box/Task_icon_box_2.Task_icon_box_2", IconGet="/Game/Arts/UI/TableIcons/Task_Icon/Box/Task_icon_box_2.Task_icon_box_2", IconGot="/Game/Arts/UI/TableIcons/Task_Icon/Box/Task_icon_box_2_2.Task_icon_box_2_2", BoxTitleName="108025"}, 
+	[3]={ID=3, Cond=90, DropID=131003, IconCheck="/Game/Arts/UI/TableIcons/Task_Icon/Box/Task_icon_box_3.Task_icon_box_3", IconGet="/Game/Arts/UI/TableIcons/Task_Icon/Box/Task_icon_box_3.Task_icon_box_3", IconGot="/Game/Arts/UI/TableIcons/Task_Icon/Box/Task_icon_box_3_3.Task_icon_box_3_3", BoxTitleName="108026"}, 
+	[4]={ID=4, Cond=120, DropID=131004, IconCheck="/Game/Arts/UI/TableIcons/Task_Icon/Box/Task_icon_box_4.Task_icon_box_4", IconGet="/Game/Arts/UI/TableIcons/Task_Icon/Box/Task_icon_box_4.Task_icon_box_4", IconGot="/Game/Arts/UI/TableIcons/Task_Icon/Box/Task_icon_box_4_4.Task_icon_box_4_4", BoxTitleName="108027"}, 
+	[5]={ID=5, Cond=150, DropID=131005, IconCheck="/Game/Arts/UI/TableIcons/Task_Icon/Box/Task_icon_box_5.Task_icon_box_5", IconGet="/Game/Arts/UI/TableIcons/Task_Icon/Box/Task_icon_box_5.Task_icon_box_5", IconGot="/Game/Arts/UI/TableIcons/Task_Icon/Box/Task_icon_box_5_5.Task_icon_box_5_5", BoxTitleName="108028"}
+}

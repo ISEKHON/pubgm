@@ -1,0 +1,16 @@
+,languageID,languageCode,displayName,isSupported
+0,0,en,English,1
+1,1,ja,日本語,0
+2,2,ko,한국어,0
+3,3,ru,Pусский,0
+4,4,pt,Português (BR),0
+5,5,th,ไทย,0
+6,6,vi,Tiếng Việt,0
+7,7,zh,简体中文,1
+8,8,zh-HK,繁中-香港,0
+9,9,zh-TW,繁中-台灣,0
+10,10,de,Deutsch,0
+11,11,id,Bahasa Indonesia,0
+12,12,fr,Français,0
+13,13,es,Español (Latam) ,0
+14,14,tr,Türkçe,0

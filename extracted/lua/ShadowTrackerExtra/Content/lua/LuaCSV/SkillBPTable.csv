@@ -1,0 +1,17 @@
+,ID,CName,Path
+1001,1001,破片手雷,/Game/Arts_PlayerBluePrints/Skill/Skill_Grenade_Frag_BP.Skill_Grenade_Frag_BP_C
+1002,1002,眩晕弹,/Game/Arts_PlayerBluePrints/Skill/Skill_Grenade_Stun_BP.Skill_Grenade_Stun_BP_C
+1003,1003,烟幕弹,/Game/Arts_PlayerBluePrints/Skill/Skill_Grenade_Smoke_BP.Skill_Grenade_Smoke_BP_C
+1004,1004,燃烧弹,/Game/Arts_PlayerBluePrints/Skill/Skill_Grenade_Molotov_BP.Skill_Grenade_Molotov_BP_C
+1005,1005,拳头攻击,/Game/Arts_PlayerBluePrints/Skill/Skill_Punch_Fist_bp.Skill_Punch_Fist_bp_C
+1006,1006,大砍刀攻击,/Game/Arts_PlayerBluePrints/Skill/Skill_Melee_Machete_BP.Skill_Melee_Machete_BP_C
+1007,1007,Cowber近战,/Game/Arts_PlayerBluePrints/Skill/Skill_Melee_Cowbar_BP.Skill_Melee_Cowbar_BP_C
+1008,1008,平底锅近战,/Game/Arts_PlayerBluePrints/Skill/Skill_Melee_Pan_BP.Skill_Melee_Pan_BP_C
+1009,1009,Sickle近战,/Game/Arts_PlayerBluePrints/Skill/Skill_Melee_Sickle_BP.Skill_Melee_Sickle_BP_C
+1010,1010,肾上腺素,/Game/Arts_PlayerBluePrints/Skill/Skill_AdrenalineSyringe_BP.Skill_AdrenalineSyringe_BP_C
+1011,1011,绷带,/Game/Arts_PlayerBluePrints/Skill/Skill_Bandage_BP.Skill_Bandage_BP_C
+1012,1012,能量饮料,/Game/Arts_PlayerBluePrints/Skill/Skill_EnergyDrink_BP.Skill_EnergyDrink_BP_C
+1013,1013,急救包,/Game/Arts_PlayerBluePrints/Skill/Skill_FirstAidKit_BP.Skill_FirstAidKit_BP_C
+1014,1014,燃料,/Game/Arts_PlayerBluePrints/Skill/Skill_GasCan_BP.Skill_GasCan_BP_C
+1015,1015,医疗箱,/Game/Arts_PlayerBluePrints/Skill/Skill_MedKit_BP.Skill_MedKit_BP_C
+1016,1016,止痛药,/Game/Arts_PlayerBluePrints/Skill/Skill_Painkiller_BP.Skill_Painkiller_BP_C

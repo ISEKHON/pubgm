@@ -1,0 +1,2 @@
+,ResId,MapName,MainMode,MainModeID,ShowImg,MapPath,MiniMapPath,WeatherMode1,WeatherMode1Weight,WeatherMode2,WeatherMode2Weight,WeatherMode3,WeatherMode3Weight,WeatherMode4,WeatherMode4Weight
+1,1,绝地岛,BT,1001_1002_1003,/Game/Arts/UI/TableIcons/Room_MapList/ditu_2.ditu_2,/Game/Maps/PUBG_Forest/PUBG_Forest,/Game/Arts/UI/HUD/WorldMap.WorldMap,PUBG_Forest_SunnyDay,30,PUBG_Forest_SunnyDay,30,PUBG_Forest_SunnyDay,30,PUBG_Forest_SunnyDay,30

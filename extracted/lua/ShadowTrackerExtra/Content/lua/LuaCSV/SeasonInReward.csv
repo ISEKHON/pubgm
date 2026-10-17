@@ -1,0 +1,9 @@
+,ID,SeasonID,SortID,Condition1_Param,Condition1_Desc,Condition2_Param1,Condition2_Param2,Condition2_Desc,RewardItemID
+10101,10101,1,1,301,达到<Setting_Font03>英勇黄金</>段位,301,5,<Setting_Font03>英勇黄金</>以上匹配5场,141001
+10102,10102,1,2,501,达到<Setting_Font03>不朽星钻</>段位,501,5,<Setting_Font03>不朽星钻</>以上匹配5场,141002
+10201,10201,2,1,301,达到<Setting_Font03>英勇黄金</>段位,301,5,<Setting_Font03>英勇黄金</>以上匹配5场,141001
+10202,10202,2,2,501,达到<Setting_Font03>不朽星钻</>段位,501,5,<Setting_Font03>不朽星钻</>以上匹配5场,141002
+10301,10301,3,1,301,达到<Setting_Font03>英勇黄金</>段位,301,5,<Setting_Font03>英勇黄金</>以上匹配5场,141001
+10302,10302,3,2,501,达到<Setting_Font03>不朽星钻</>段位,501,5,<Setting_Font03>不朽星钻</>以上匹配5场,141002
+10401,10401,4,1,301,达到<Setting_Font03>英勇黄金</>段位,301,5,<Setting_Font03>英勇黄金</>以上匹配5场,141001
+10402,10402,4,2,501,达到<Setting_Font03>不朽星钻</>段位,501,5,<Setting_Font03>不朽星钻</>以上匹配5场,141002

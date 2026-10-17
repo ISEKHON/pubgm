@@ -1,4 +1,5 @@
-extracted/
+extracted/apk
+extracted/*.apk
 *.xapk
 server/build/
 __pycache__/

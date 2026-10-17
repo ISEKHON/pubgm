@@ -1,0 +1,5 @@
+,ZoneID,NameInChinese,NameInEnglish,GVoiceServer
+1,1,北美,NorthAmerica,udp://us.voice.gcloudcs.com:8700
+2,2,欧洲,Europe,udp://de.voice.gcloudcs.com:8700
+3,3,亚洲,Asia,udp://hk.voice.gcloudcs.com:10013
+4,4,东南亚,SoutheastAsia,udp://sg.voice.gcloudcs.com:8700

@@ -1,0 +1,21 @@
+BP_ARRAY_BTMode=
+{
+	[1001]={ResId=1001, BTMode="SBT", MaxMember=100, MaxTeamMember=1, MaxTime=2700, ReplenishMember=false, GameModeName="/Game/BluePrints/Core/BP_BattleRoyaleGameMode_PUBG.BP_BattleRoyaleGameMode_PUBG_C"}, 
+	[1002]={ResId=1002, BTMode="TBT", MaxMember=100, MaxTeamMember=2, MaxTime=2700, ReplenishMember=true, GameModeName="/Game/BluePrints/Core/BP_BattleRoyaleGameModeTeamPUBG_Double.BP_BattleRoyaleGameModeTeamPUBG_Double_C"}, 
+	[1003]={ResId=1003, BTMode="TBT", MaxMember=100, MaxTeamMember=4, MaxTime=2700, ReplenishMember=true, GameModeName="/Game/BluePrints/Core/BP_BattleRoyaleGameModeTeamPUBG_Four.BP_BattleRoyaleGameModeTeamPUBG_Four_C"}, 
+	[1004]={ResId=1004, BTMode="SBT", MaxMember=100, MaxTeamMember=1, MaxTime=2700, ReplenishMember=false, GameModeName="/Game/BluePrints/Core/BP_BattleRoyaleGameMode_Rcity.BP_BattleRoyaleGameMode_Rcity_C"}, 
+	[1005]={ResId=1005, BTMode="TBT", MaxMember=100, MaxTeamMember=2, MaxTime=2700, ReplenishMember=true, GameModeName="/Game/BluePrints/Core/BP_BattleRoyaleGameModeTeamRcity_Double.BP_BattleRoyaleGameModeTeamRcity_Double_C"}, 
+	[1006]={ResId=1006, BTMode="TBT", MaxMember=100, MaxTeamMember=4, MaxTime=2700, ReplenishMember=true, GameModeName="/Game/BluePrints/Core/BP_BattleRoyaleGameModeTeamRcity_Four.BP_BattleRoyaleGameModeTeamRcity_Four_C"}, 
+	[1007]={ResId=1007, BTMode="SBT", MaxMember=100, MaxTeamMember=1, MaxTime=2700, ReplenishMember=false, GameModeName="/Game/BluePrints/Core/BP_BattleRoyalTrainingGameMode.BP_BattleRoyalTrainingGameMode_C"}, 
+	[1008]={ResId=1008, BTMode="TBT", MaxMember=100, MaxTeamMember=2, MaxTime=2700, ReplenishMember=false, GameModeName="/Game/BluePrints/Core/BP_BattleRoyalTrainingGameMode.BP_BattleRoyalTrainingGameMode_C"}, 
+	[1009]={ResId=1009, BTMode="TBT", MaxMember=100, MaxTeamMember=4, MaxTime=2700, ReplenishMember=false, GameModeName="/Game/BluePrints/Core/BP_BattleRoyalTrainingGameMode.BP_BattleRoyalTrainingGameMode_C"}, 
+	[1010]={ResId=1010, BTMode="SBT", MaxMember=100, MaxTeamMember=1, MaxTime=2700, ReplenishMember=false, GameModeName="/Game/BluePrints/Core/BP_BattleRoyaleGameMode_PUBG_TestVehicle.BP_BattleRoyaleGameMode_PUBG_TestVehicle_C"}, 
+	[1011]={ResId=1011, BTMode="TBT", MaxMember=100, MaxTeamMember=2, MaxTime=2700, ReplenishMember=true, GameModeName="/Game/BluePrints/Core/BP_BattleRoyaleGameModeTeamPUBG_Double.BP_BattleRoyaleGameModeTeamPUBG_Double_C"}, 
+	[1012]={ResId=1012, BTMode="TBT", MaxMember=100, MaxTeamMember=4, MaxTime=2700, ReplenishMember=true, GameModeName="/Game/BluePrints/Core/BP_BattleRoyaleGameModeTeamPUBG_Four.BP_BattleRoyaleGameModeTeamPUBG_Four_C"}, 
+	[1013]={ResId=1013, BTMode="SBT", MaxMember=100, MaxTeamMember=1, MaxTime=2700, ReplenishMember=false, GameModeName="/Game/BluePrints/Core/BP_BattleRoyaleGameMode_HolidayRcity.BP_BattleRoyaleGameMode_HolidayRcity_C"}, 
+	[1014]={ResId=1014, BTMode="TBT", MaxMember=100, MaxTeamMember=2, MaxTime=2700, ReplenishMember=true, GameModeName="/Game/BluePrints/Core/BP_BattleRoyaleGameModeTeamHolidayRcity_Double.BP_BattleRoyaleGameModeTeamHolidayRcity_Double_C"}, 
+	[1015]={ResId=1015, BTMode="TBT", MaxMember=100, MaxTeamMember=4, MaxTime=2700, ReplenishMember=true, GameModeName="/Game/BluePrints/Core/BP_BattleRoyaleGameModeTeamHolidayRcity_Four.BP_BattleRoyaleGameModeTeamHolidayRcity_Four_C"}, 
+	[1016]={ResId=1016, BTMode="SBT", MaxMember=100, MaxTeamMember=1, MaxTime=2700, ReplenishMember=false, GameModeName="/Game/BluePrints/Core/BP_BattleRoyaleGameMode_HolidayRcity2.BP_BattleRoyaleGameMode_HolidayRcity2_C"}, 
+	[1017]={ResId=1017, BTMode="TBT", MaxMember=100, MaxTeamMember=2, MaxTime=2700, ReplenishMember=true, GameModeName="/Game/BluePrints/Core/BP_BattleRoyaleGameModeTeamHolidayRcity2_Double.BP_BattleRoyaleGameModeTeamHolidayRcity2_Double_C"}, 
+	[1018]={ResId=1018, BTMode="TBT", MaxMember=100, MaxTeamMember=4, MaxTime=2700, ReplenishMember=true, GameModeName="/Game/BluePrints/Core/BP_BattleRoyaleGameModeTeamHolidayRcity2_Four.BP_BattleRoyaleGameModeTeamHolidayRcity2_Four_C"}
+}

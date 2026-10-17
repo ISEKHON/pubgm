@@ -1,0 +1,6 @@
+,StyleName,FontPath,FontSize,FontColor,UnderLine
+LinkFont,LinkFont,/Engine/EngineFonts/Roboto.Roboto,24,255;255;255;255,0
+MailLink,MailLink,/Engine/EngineFonts/Roboto.Roboto,16,0;255;0;255;,1
+NoticeLink,NoticeLink,/Engine/EngineFonts/Roboto.Roboto,14,53;255;134;255,1
+ScrollNoticeHyLink,ScrollNoticeHyLink,/Engine/EngineFonts/Roboto.Roboto,12,53;255;134;255,1
+TaskLink,TaskLink,/Engine/EngineFonts/Roboto.Roboto,24,0;255;0;255;,1

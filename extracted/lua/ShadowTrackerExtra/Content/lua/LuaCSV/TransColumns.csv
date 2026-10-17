@@ -1,0 +1,17 @@
+,Table,Columns
+AvatarFrame,AvatarFrame,Name|Desc_1|DescGet|DescTime
+BattleText,BattleText,BattleTextValue
+Drop,Drop,Desc
+Item,Item,ItemName|ItemDesc|PickupDesc
+LocalizeRes,LocalizeRes,TextValue
+Map,Map,MapName
+MilitaryRankLevel,MilitaryRankLevel,MilitaryRankName|MilitaryRankType
+NewteachingInfo,NewteachingInfo,titleName
+RankIntegralLevel,RankIntegralLevel,Name_6|IntegralTypeName
+ResultTitleConfig,ResultTitleConfig,Title
+SeasonEndReward,SeasonEndReward,Condition_Desc_3
+SeasonInReward,SeasonInReward,Condition1_Desc_7|Condition2_Desc_8
+SeasonInfo,SeasonInfo,SeasonName
+ShopItem,ShopItem,ProductName|ProductDesc
+Task,Task,TaskCategoryDesc|Title|Desc_2
+ZoneConfig,ZoneConfig,NameInChinese
